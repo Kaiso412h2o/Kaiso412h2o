@@ -1,0 +1,59 @@
+#Work in Progress!!
+
+#Script for Download with OpenAlex
+
+oa_download = function(candidate_name, candidate_orcid, ucris) {
+author <- purrr::map(
+  c(candidate_name, candidate_orcid),
+  ~ openalexR::oa_fetch(
+    entity = "authors",
+    search  = .,
+    options = list(
+      select = c(
+        "id",
+        "display_name",
+        "display_name_alternatives",
+        "orcid",
+        "works_count",
+        "last_known_institution"
+      )
+    ),
+    mailto = "pablo@mka.at",
+    verbose = TRUE
+  )
+) %>%
+  dplyr::bind_rows()
+
+# all works by researcher (by author id, doi and titles)
+works_1 <- openalexR::oa_fetch(authorships.author.id = author$id)
+works_2 <- openalexR::oa_fetch(doi = ucris$doi)
+# if query gets too large, it needs to be split up into smaller queries (currently n = 25)
+n = 25
+works_3 <- purrr::map(split(ucris, rep(1:ceiling(nrow(ucris) / n), each = n)), 
+                      ~ openalexR::oa_fetch(title.search = .[[identified$title_col]] %>% 
+                                              bibliometrie::get_query_titles(),
+                                            publication_year = .[[identified$year_col]])
+                      ) %>% dplyr::bind_rows()
+                      
+
+oa <-
+  purrr::reduce(list(works_1, works_2, works_3), dplyr::bind_rows) %>%
+  dplyr::select(
+    -c(
+      "ab",
+      "publication_date",
+      "counts_by_year",
+      "ids",
+      "related_works",
+      "referenced_works",
+      "concepts",
+      "relevance_score"
+    )
+  ) %>%
+  dplyr::distinct() %>%
+  bibliometrie::unnest_all_cols() 
+
+return(oa)
+}
+
+
