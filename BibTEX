@@ -1,0 +1,23 @@
+#Work in progress
+#This function loads BibTex (.bib) files into R and saves them as dataframe in the envirment
+
+library(tibble)
+library(RefManageR)
+library(bibtex)
+
+bib_files <- list.files(pattern = "\\.bib$")
+
+
+ads_all_list <- lapply(bib_files, function(bib_file) {
+  
+  ads_download <- ReadBib(bib_file)
+  
+  ads_download_df <- tibble::rownames_to_column(as.data.frame(ads_download), "Bibcode")
+  
+  ads_download_df <- ads_download_df[, c("Bibcode", "title", "year", "doi", "eid")]
+ 
+  return(ads_download_df)
+})
+
+# Use do.call and rbind to bind all data frames in the list into one data frame
+ads_all <- do.call(rbind, ads_all_list)
