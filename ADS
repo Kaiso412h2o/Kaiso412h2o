@@ -1,0 +1,12 @@
+slice_x = 1
+slice_y = 20
+
+ADS = ADS %>% 
+  filter(!is.na(ADS$Bibcode) )
+
+ADS %>% 
+  slice(slice_x:slice_y) %>% 
+  pull(Bibcode) %>% 
+  paste(collapse = " OR ") %>% 
+  paste0("bibcode:(", ., ")") %>% 
+  clipr::write_clip()
